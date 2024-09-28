@@ -16,6 +16,8 @@ async function bootstrap() {
   // Apply Global Exception Filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
+  app.enableCors();
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}`);
