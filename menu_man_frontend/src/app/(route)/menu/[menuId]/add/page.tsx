@@ -15,10 +15,10 @@ const useAddMenuPage = (menuId: string) => {
   const dispatch = useAppDispatch();
 
   const menuTrees = useAppSelector((state) => state.menuTree.items);
-  const isLoading = useAppSelector((state) => state.menuTree.isLoading);
-  const isSuccess = useAppSelector((state) => state.menuTree.isSuccess);
-  const isError = useAppSelector((state) => state.menuTree.isError);
-  const errorMessage = useAppSelector((state) => state.menuTree.errorMessage);
+  const isLoading = useAppSelector((state) => state.menuAdd.isLoading);
+  const isSuccess = useAppSelector((state) => state.menuAdd.isSuccess);
+  const isError = useAppSelector((state) => state.menuAdd.isError);
+  const errorMessage = useAppSelector((state) => state.menuAdd.errorMessage);
 
   useEffect(() => {
     dispatch(fetchMenuTree());
