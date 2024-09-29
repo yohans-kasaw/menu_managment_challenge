@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Tree, Button } from "antd";
-import type { TreeDataNode, TreeProps } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
-import type { DataNode, EventDataNode } from "antd/lib/tree";
+import { uniqueKeyValidator, flattenTree } from '@/lib/util'; // Assume utility functions are defined elsewhere
+import { TreeDataNode } from "antd";
 
 // Define the expected props type
 interface TreeViewProps {
@@ -15,153 +15,75 @@ interface TreeViewProps {
 export default function TreeView({ treeData = [] }: TreeViewProps) {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [hoveredKey, setHoveredKey] = useState<React.Key | null>(null);
-  const [activeButton, setActiveButton] = useState<string | null>(null); // New state to track active button
-
   const router = useRouter();
 
-  // Validate treeData and ensure keys are unique
+  // Validate treeData keys for uniqueness on mount and treeData update
   useEffect(() => {
-    const keys = new Set();
-    const checkKeys = (nodes: TreeDataNode[]) => {
-      nodes.forEach((node) => {
-        if (keys.has(node.key)) {
-          console.error(`Duplicate key found: ${node.key}`);
-        } else {
-          keys.add(node.key);
-        }
-        if (node.children) {
-          checkKeys(node.children);
-        }
-      });
-    };
-    checkKeys(treeData);
+    uniqueKeyValidator(treeData);
   }, [treeData]);
-
-  // Helper function to get all keys (to expand all)
-  const getAllKeys = (data: TreeDataNode[]): React.Key[] => {
-    const keys: React.Key[] = [];
-    const stack = [...data];
-    while (stack.length) {
-      const node = stack.pop()!;
-      keys.push(node.key);
-      if (node.children) {
-        stack.push(...node.children);
-      }
-    }
-    return keys;
-  };
-
-  const allKeys = useMemo(() => getAllKeys(treeData), [treeData]);
-
-  // Check if all nodes are expanded
-  const areAllNodesExpanded = expandedKeys.length === allKeys.length;
-  // Check if no nodes are expanded
-  const areNoNodesExpanded = expandedKeys.length === 0;
-
-  // Expand all nodes
-  const handleExpandAll = () => {
-    setExpandedKeys(allKeys);
-    setActiveButton("expand");
-  };
-
-  // Collapse all nodes
-  const handleCollapseAll = () => {
-    setExpandedKeys([]);
-    setActiveButton("collapse");
-  };
-
-  // Custom rendering for tree nodes
-  const titleRender: TreeProps["titleRender"] = (node) => {
-    const isHovered = node.key === hoveredKey;
-
-    return (
-      <div
-        onMouseEnter={() => setHoveredKey(node.key)}
-        onMouseLeave={() => setHoveredKey(null)}
-        className="tree-node"
-      >
-        <span className="node-title">{node.title}</span>
-        {isHovered && (
-          <a
-            className="ml-2"
-            type="primary"
-            shape="circle"
-            icon={<PlusOutlined />}
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAdd(node);
-            }}
-            aria-label="Add"
-            title="Add"
-          ></a>
-        )}
-      </div>
-    );
-  };
-
-  const handleNodeSelect = (
-    selectedKeys: React.Key[],
-    info: {
-      event: "select";
-      selected: boolean;
-      node: EventDataNode<React.Key>;
-      selectedNodes: DataNode[];
-      nativeEvent: MouseEvent;
-    },
-  ) => {
-    if (info.node.key !== undefined && info.node.key !== null) {
-      router.push(`/menu/${info.node.key}/edit`);
-    } else {
-      console.error("Node key is invalid:", info.node);
-    }
-  };
-
-  const handleAdd = (node: TreeDataNode) => {
-    if (node.key !== undefined && node.key !== null) {
-      router.push(`/menu/${node.key}/add`);
-    } else {
-      console.error("Node key is invalid:", node);
-    }
-  };
-
-  // Update the active button state when individual nodes are expanded/collapsed
-  const handleTreeExpand = (newExpandedKeys: React.Key[]) => {
-    setExpandedKeys(newExpandedKeys);
-
-    if (newExpandedKeys.length === allKeys.length) {
-      setActiveButton("expand");
-    } else if (newExpandedKeys.length === 0) {
-      setActiveButton("collapse");
-    } else {
-      setActiveButton(null);
-    }
-  };
 
   // Initialize expandedKeys to root node keys
   useEffect(() => {
-    const rootKeys = treeData.map((node) => node.key);
-    setExpandedKeys(rootKeys);
+    setExpandedKeys(treeData.map(node => node.key));
   }, [treeData]);
 
+  const allKeys = useMemo(() => flattenTree(treeData), [treeData]);
+  const areAllNodesExpanded = expandedKeys.length === allKeys.length;
+  const areNoNodesExpanded = expandedKeys.length === 0;
+
+  const handleExpandCollapse = (expand: boolean) => {
+    setExpandedKeys(expand ? allKeys : []);
+  };
+
+  const handleNodeHover = (key: React.Key | null) => {
+    setHoveredKey(key);
+  };
+
+  const handleNodeAction = (node: TreeDataNode, action: string) => {
+    const route = `/menu/${node.key}/${action}`;
+    if (node.key) {
+      router.push(route);
+    } else {
+      console.error("Invalid node key:", node);
+    }
+  };
+
+  const titleRender: TreeProps["titleRender"] = (node) => (
+    <div
+      onMouseEnter={() => handleNodeHover(node.key)}
+      onMouseLeave={() => handleNodeHover(null)}
+      className="flex items-center"
+    >
+      <span className="text-sm">{node.title}</span>
+      {String(node.key) === String(hoveredKey) && (
+        <Button
+          className="ml-2 p-1 rounded-full bg-blue-500 hover:bg-blue-700 text-white"
+          type="primary"
+          shape="circle"
+          icon={<PlusOutlined />}
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNodeAction(node, 'add');
+          }}
+          aria-label="Add Node"
+          title="Add Node"
+        />
+      )}
+    </div>
+  );
+
   return (
-    <div>
+    <div className="p-4">
       <Button
-        onClick={handleExpandAll}
-        style={{
-          marginRight: 8,
-          backgroundColor: areAllNodesExpanded ? "black" : undefined,
-          color: areAllNodesExpanded ? "white" : undefined,
-        }}
+        className={`mr-2 ${areAllNodesExpanded ? 'bg-black text-white' : 'text-black'} p-4 rounded-lg mb-4`}
+        onClick={() => handleExpandCollapse(true)}
       >
         Expand All
       </Button>
       <Button
-        onClick={handleCollapseAll}
-        style={{
-          backgroundColor: areNoNodesExpanded ? "black" : undefined,
-          color: areNoNodesExpanded ? "white" : undefined,
-        }}
+        className={`mr-2 ${areNoNodesExpanded ? 'bg-black text-white' : 'text-black'} p-4 rounded-lg mb-4`}
+        onClick={() => handleExpandCollapse(false)}
       >
         Collapse All
       </Button>
@@ -169,10 +91,10 @@ export default function TreeView({ treeData = [] }: TreeViewProps) {
         showLine
         switcherIcon={<DownOutlined />}
         expandedKeys={expandedKeys}
-        onExpand={handleTreeExpand}
+        onExpand={setExpandedKeys}
         treeData={treeData}
         titleRender={titleRender}
-        onSelect={handleNodeSelect}
+        onSelect={(keys, info) => handleNodeAction(info.node, 'edit')}
       />
     </div>
   );

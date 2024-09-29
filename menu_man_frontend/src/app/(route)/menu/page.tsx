@@ -1,9 +1,61 @@
-import TreeView from "@/app/components/shared/TreeView";
-import type { TreeDataNode } from "antd";
-
+"use client";
+import { useAppSelector, useAppDispatch } from "@/lib/hooks";
+import { fetchMenuTree } from "@/lib/features/menu/menu.thunks";
+import { selectMenuTrees } from "@/lib/features/menu/menu.selector";
+import { useEffect } from "react";
+import { Spin, Alert, Button } from "antd";
 import { AppstoreOutlined } from "@ant-design/icons";
+import TreeView from "@/app/components/shared/TreeView";
+import { useRouter } from "next/navigation";
 
+// Custom hook for encapsulating the menu page logic
+const useMenuPage = () => {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+
+  const {
+    menuTrees,
+    isLoading,
+    isSuccess,
+    isError,
+    errorMessage,
+  } = useAppSelector((state) => ({
+    menuTrees: selectMenuTrees(state),
+    isLoading: state.menuTree.isLoading,
+    isSuccess: state.menuTree.isSuccess,
+    isError: state.menuTree.isError,
+    errorMessage: state.menuTree.errorMessage,
+  }));
+
+  useEffect(() => {
+    dispatch(fetchMenuTree());
+  }, [dispatch]);
+
+  const handleAddMenu = () => {
+    router.push("/menu/-1/add");
+  };
+
+  return {
+    menuTrees,
+    isLoading,
+    isSuccess,
+    isError,
+    errorMessage,
+    handleAddMenu,
+  };
+};
+
+// Component for displaying menus
 export default function MenuPage() {
+  const {
+    menuTrees,
+    isLoading,
+    isSuccess,
+    isError,
+    errorMessage,
+    handleAddMenu,
+  } = useMenuPage();
+
   return (
     <div>
       <div className="flex items-center mb-6">
@@ -16,100 +68,49 @@ export default function MenuPage() {
         <h1 className="text-3xl font-bold text-gray-700">Menus</h1>
       </div>
 
-      <TreeView treeData={treeData} />
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex justify-center">
+          <Spin size="large" />
+        </div>
+      )}
+
+      {/* Error state */}
+      {isError && (
+        <Alert
+          message="Error"
+          description={
+            errorMessage || "Failed to load menus. Please try again later."
+          }
+          type="error"
+          showIcon
+          className="mb-4"
+        />
+      )}
+
+      {/* Success state with menu data */}
+      {isSuccess && menuTrees.length > 0 && (
+        <TreeView treeData={menuTrees as TreeDataNode[]} />
+      )}
+
+      {/* Success state with no menu data */}
+      {isSuccess && menuTrees.length === 0 && (
+        <div className="mb-4">
+          <Alert
+            message="No Menus Available"
+            description="There are no menus to display at the moment."
+            type="info"
+            showIcon
+          />
+          <Button
+            type="primary"
+            onClick={handleAddMenu}
+            style={{ marginTop: "16px" }}
+          >
+            Add Menu
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
-
-const treeData: TreeDataNode[] = [
-  {
-    title: "System Management",
-    key: "0-0",
-    children: [
-      {
-        title: "Systems",
-        key: "0-0-0",
-        children: [
-          {
-            title: "System Code",
-            key: "0-0-0-0",
-            children: [
-              {
-                title: "Code Registration",
-                key: "0-0-0-0-0",
-              },
-              {
-                title: "Code Registration - 2",
-                key: "0-0-0-0-1",
-              },
-              {
-                title: "Properties",
-                key: "0-0-0-0-2",
-              },
-            ],
-          },
-          {
-            title: "Menus",
-            key: "0-0-0-1",
-            children: [
-              {
-                title: "Menu Registration",
-                key: "0-0-0-1-0",
-              },
-            ],
-          },
-          {
-            title: "API List",
-            key: "0-0-0-2",
-            children: [
-              {
-                title: "API Registration",
-                key: "0-0-0-2-0",
-              },
-              {
-                title: "API Edit",
-                key: "0-0-0-2-1",
-              },
-            ],
-          },
-        ],
-      },
-      {
-        title: "Users & Groups",
-        key: "0-0-1",
-        children: [
-          {
-            title: "Users",
-            key: "0-0-1-0",
-            children: [
-              {
-                title: "User Account Registration",
-                key: "0-0-1-0-0",
-              },
-            ],
-          },
-          {
-            title: "Groups",
-            key: "0-0-1-1",
-            children: [
-              {
-                title: "User Group Registration",
-                key: "0-0-1-1-0",
-              },
-            ],
-          },
-        ],
-      },
-      {
-        title: "사용자 승인",
-        key: "0-0-2",
-        children: [
-          {
-            title: "사용자 승인 상세",
-            key: "0-0-2-0",
-          },
-        ],
-      },
-    ],
-  },
-];
