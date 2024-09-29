@@ -25,7 +25,7 @@ const MenuUpdateSlice = createSlice({
       .addCase(updateMenuItem.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(updateMenuItem.fulfilled, (state, action) => {
+      .addCase(updateMenuItem.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
       })

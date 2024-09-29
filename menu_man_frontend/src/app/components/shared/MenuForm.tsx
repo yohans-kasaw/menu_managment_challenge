@@ -4,10 +4,9 @@ import { DeleteOutlined } from "@ant-design/icons";
 import { MenuItem } from "@/lib/types";
 
 interface MenuFormProps {
-  id: number;
   menu?: MenuItem;
   onSave: (parentId: number | null, name: string) => void;
-  onDelete: (id: number) => void;
+  onDelete?: (id: number) => void;
   formMode: "add" | "edit";
 }
 
@@ -24,7 +23,7 @@ const MenuForm: React.FC<MenuFormProps> = ({
   };
 
   const handleDelete = () => {
-    if (menu?.id) {
+    if (menu?.id && onDelete) {
       onDelete(menu.id);
     }
   };

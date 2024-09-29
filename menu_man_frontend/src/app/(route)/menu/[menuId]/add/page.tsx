@@ -7,21 +7,22 @@ import { findMenuItemById } from "@/lib/util";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import { createMenuItem } from "@/lib/features/menu/menu.thunks";
 import { resetMenuAddState } from "@/lib/features/menu/menu.add.slice";
-import { RootState } from "@/lib/store";
-import { MenuItem } from "@/lib/types";
+import { fetchMenuTree } from "@/lib/features/menu/menu.thunks";
 
 // Custom hook to encapsulate the AddMenuPage logic
 const useAddMenuPage = (menuId: string) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  
-  const { menuTrees, isLoading, isSuccess, isError, errorMessage } = useAppSelector((state: RootState) => ({
-    menuTrees: state.menuTree.items,
-    isLoading: state.menuAdd.isLoading,
-    isSuccess: state.menuAdd.isSuccess,
-    isError: state.menuAdd.isError,
-    errorMessage: state.menuAdd.errorMessage
-  }));
+
+  const menuTrees = useAppSelector((state) => state.menuTree.items);
+  const isLoading = useAppSelector((state) => state.menuTree.isLoading);
+  const isSuccess = useAppSelector((state) => state.menuTree.isSuccess);
+  const isError = useAppSelector((state) => state.menuTree.isError);
+  const errorMessage = useAppSelector((state) => state.menuTree.errorMessage);
+
+  useEffect(() => {
+    dispatch(fetchMenuTree());
+  }, [dispatch]);
 
   const menuItem = useMemo(() => {
     if (menuId !== "-1" && menuTrees) {
@@ -49,7 +50,10 @@ const useAddMenuPage = (menuId: string) => {
 
   const handleSave = (parentId: number | null, name: string) => {
     if (!name) {
-      notification.error({ message: "Validation Error", description: "Name is required" });
+      notification.error({
+        message: "Validation Error",
+        description: "Name is required",
+      });
       return;
     }
     dispatch(createMenuItem({ parentId, name }));
@@ -57,7 +61,10 @@ const useAddMenuPage = (menuId: string) => {
 
   useEffect(() => {
     if (isSuccess) {
-      notification.success({ message: "Success", description: "Menu item added successfully" });
+      notification.success({
+        message: "Success",
+        description: "Menu item added successfully",
+      });
       dispatch(resetMenuAddState());
       router.push("/menu");
     }
@@ -74,10 +81,24 @@ const useAddMenuPage = (menuId: string) => {
 };
 
 const AddMenuPage: React.FC<{ params: { menuId: string } }> = ({ params }) => {
-  const { parentMenuItem, isLoading, isError, errorMessage, handleSave, menuItem } = useAddMenuPage(params.menuId);
+  const {
+    parentMenuItem,
+    isLoading,
+    isError,
+    errorMessage,
+    handleSave,
+    menuItem,
+  } = useAddMenuPage(params.menuId);
 
   if (!menuItem && params.menuId !== "-1") {
-    return <Alert message="Error" description="Menu not found" type="error" showIcon />;
+    return (
+      <Alert
+        message="Error"
+        description="Menu not found"
+        type="error"
+        showIcon
+      />
+    );
   }
 
   if (isLoading) {

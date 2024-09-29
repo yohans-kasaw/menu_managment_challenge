@@ -47,7 +47,7 @@ const useEditMenuPage = (menuId: string) => {
     return null;
   }, [menuId, menuTrees]);
 
-  const handleUpdate = (parentId: number, name: string) => {
+  const handleUpdate = (parentId: number | null, name: string) => {
     if (!name) {
       notification.error({ message: "Validation Error", description: "Name is required" });
       return;

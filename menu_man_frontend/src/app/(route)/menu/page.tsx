@@ -1,26 +1,20 @@
 "use client";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import { fetchMenuTree } from "@/lib/features/menu/menu.thunks";
-import { selectMenuTrees } from "@/lib/features/menu/menu.selector";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Spin, Alert, Button } from "antd";
 import { AppstoreOutlined } from "@ant-design/icons";
 import TreeView from "@/app/components/shared/TreeView";
 import { useRouter } from "next/navigation";
+import { makeMenuTreeDataNode } from "@/lib/util";
+import { useMemo } from "react";
 
-// Custom hook for encapsulating the menu page logic
 const useMenuPage = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const {
-    menuTrees,
-    isLoading,
-    isSuccess,
-    isError,
-    errorMessage,
-  } = useAppSelector((state) => ({
-    menuTrees: selectMenuTrees(state),
+  const { menuTrees, isLoading, isSuccess, isError, errorMessage } = useAppSelector((state) => ({
+    menuTrees: state.menuTree.items,
     isLoading: state.menuTree.isLoading,
     isSuccess: state.menuTree.isSuccess,
     isError: state.menuTree.isError,
@@ -45,56 +39,47 @@ const useMenuPage = () => {
   };
 };
 
-// Component for displaying menus
 export default function MenuPage() {
-  const {
-    menuTrees,
-    isLoading,
-    isSuccess,
-    isError,
-    errorMessage,
-    handleAddMenu,
-  } = useMenuPage();
+  const { menuTrees, isLoading, isSuccess, isError, errorMessage, handleAddMenu } = useMenuPage();
+  const [isClient, setIsClient] = useState(false);
+
+  // Trigger the client-only rendering flag after mounting
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const menuTreeDataNode = useMemo(() => isClient ? makeMenuTreeDataNode(menuTrees) : [], [menuTrees, isClient]);
 
   return (
     <div>
       <div className="flex items-center mb-6">
         <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
-          <AppstoreOutlined
-            className="text-white"
-            style={{ fontSize: "24px" }}
-          />
+          <AppstoreOutlined className="text-white" style={{ fontSize: "24px" }} />
         </div>
         <h1 className="text-3xl font-bold text-gray-700">Menus</h1>
       </div>
 
-      {/* Loading state */}
       {isLoading && (
         <div className="flex justify-center">
           <Spin size="large" />
         </div>
       )}
 
-      {/* Error state */}
       {isError && (
         <Alert
           message="Error"
-          description={
-            errorMessage || "Failed to load menus. Please try again later."
-          }
+          description={errorMessage || "Failed to load menus. Please try again later."}
           type="error"
           showIcon
           className="mb-4"
         />
       )}
 
-      {/* Success state with menu data */}
-      {isSuccess && menuTrees.length > 0 && (
-        <TreeView treeData={menuTrees as TreeDataNode[]} />
+      {isClient && isSuccess && (menuTrees?.length ?? 0) > 0 && (
+        <TreeView treeData={menuTreeDataNode} />
       )}
 
-      {/* Success state with no menu data */}
-      {isSuccess && menuTrees.length === 0 && (
+      {isClient && isSuccess && (menuTrees?.length ?? 0) === 0 && (
         <div className="mb-4">
           <Alert
             message="No Menus Available"

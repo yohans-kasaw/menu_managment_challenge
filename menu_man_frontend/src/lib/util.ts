@@ -19,7 +19,6 @@ export const findMenuItemById = (
   return undefined;
 };
 
-
 export const uniqueKeyValidator = (treeData: TreeDataNode[]): void => {
   const keys = new Set<React.Key>();
   const checkKeys = (nodes: TreeDataNode[]) => {
@@ -48,4 +47,18 @@ export const flattenTree = (data: TreeDataNode[]): React.Key[] => {
     }
   }
   return keys;
+};
+
+export const makeMenuTreeDataNode = (
+  items: MenuItem[] | undefined,
+): TreeDataNode[] => {
+  const makeNode = (item: MenuItem): TreeDataNode => {
+    return {
+      key: item.id??0,
+      title: item.name,
+      children: item.children?.map(makeNode),
+    };
+  };
+
+  return items?.map(makeNode) ?? [];
 };

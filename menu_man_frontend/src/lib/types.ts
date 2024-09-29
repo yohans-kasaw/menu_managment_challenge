@@ -1,5 +1,5 @@
 export interface MenuItem {
-  id: number;
+  id: number | null;
   name: string;
   depth?: number;
   parentId?: number;

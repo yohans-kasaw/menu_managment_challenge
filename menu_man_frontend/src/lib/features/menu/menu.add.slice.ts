@@ -27,7 +27,7 @@ const MenuAddSlice = createSlice({
         state.isLoading = true;
         state.isSuccess = false;
       })
-      .addCase(createMenuItem.fulfilled, (state, action) => {
+      .addCase(createMenuItem.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
       })

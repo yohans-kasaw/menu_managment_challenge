@@ -6,6 +6,7 @@ import { DownOutlined, PlusOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { uniqueKeyValidator, flattenTree } from '@/lib/util'; // Assume utility functions are defined elsewhere
 import { TreeDataNode } from "antd";
+import { TreeProps } from "antd/lib/tree";
 
 // Define the expected props type
 interface TreeViewProps {
@@ -54,7 +55,7 @@ export default function TreeView({ treeData = [] }: TreeViewProps) {
       onMouseLeave={() => handleNodeHover(null)}
       className="flex items-center"
     >
-      <span className="text-sm">{node.title}</span>
+      <span className="text-sm">{node.title as string}</span>
       {String(node.key) === String(hoveredKey) && (
         <Button
           className="ml-2 p-1 rounded-full bg-blue-500 hover:bg-blue-700 text-white"

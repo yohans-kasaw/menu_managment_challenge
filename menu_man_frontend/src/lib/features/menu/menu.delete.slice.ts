@@ -26,7 +26,7 @@ const MenuDeleteSlice = createSlice({
         state.isLoading = true;
         state.isSuccess = false;
       })
-      .addCase(deleteMenuItem.fulfilled, (state, action) => {
+      .addCase(deleteMenuItem.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
       })
