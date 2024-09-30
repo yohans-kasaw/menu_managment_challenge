@@ -13,13 +13,14 @@ const useMenuPage = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const { menuTrees, isLoading, isSuccess, isError, errorMessage } = useAppSelector((state) => ({
-    menuTrees: state.menuTree.items,
-    isLoading: state.menuTree.isLoading,
-    isSuccess: state.menuTree.isSuccess,
-    isError: state.menuTree.isError,
-    errorMessage: state.menuTree.errorMessage,
-  }));
+  const { menuTrees, isLoading, isSuccess, isError, errorMessage } =
+    useAppSelector((state) => ({
+      menuTrees: state.menuTree.items,
+      isLoading: state.menuTree.isLoading,
+      isSuccess: state.menuTree.isSuccess,
+      isError: state.menuTree.isError,
+      errorMessage: state.menuTree.errorMessage,
+    }));
 
   useEffect(() => {
     dispatch(fetchMenuTree());
@@ -40,7 +41,14 @@ const useMenuPage = () => {
 };
 
 export default function MenuPage() {
-  const { menuTrees, isLoading, isSuccess, isError, errorMessage, handleAddMenu } = useMenuPage();
+  const {
+    menuTrees,
+    isLoading,
+    isSuccess,
+    isError,
+    errorMessage,
+    handleAddMenu,
+  } = useMenuPage();
   const [isClient, setIsClient] = useState(false);
 
   // Trigger the client-only rendering flag after mounting
@@ -48,16 +56,32 @@ export default function MenuPage() {
     setIsClient(true);
   }, []);
 
-  const menuTreeDataNode = useMemo(() => isClient ? makeMenuTreeDataNode(menuTrees) : [], [menuTrees, isClient]);
+  const menuTreeDataNode = useMemo(
+    () => (isClient ? makeMenuTreeDataNode(menuTrees) : []),
+    [menuTrees, isClient],
+  );
 
   return (
     <div>
       <div className="flex items-center mb-6">
         <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
-          <AppstoreOutlined className="text-white" style={{ fontSize: "24px" }} />
+          <AppstoreOutlined
+            className="text-white"
+            style={{ fontSize: "24px" }}
+          />
         </div>
         <h1 className="text-3xl font-bold text-gray-700">Menus</h1>
       </div>
+
+      {isLoading && (
+        <Alert
+          message="Important Notice"
+          description="If this is your first time using the application, loading the menus may take over 2 minutes. This delay is due to the backend being hosted on free trial servers. Please click on the menu items to update or delete them."
+          type="info"
+          showIcon
+          className="mb-4"
+        />
+      )}
 
       {isLoading && (
         <div className="flex justify-center">
@@ -68,7 +92,9 @@ export default function MenuPage() {
       {isError && (
         <Alert
           message="Error"
-          description={errorMessage || "Failed to load menus. Please try again later."}
+          description={
+            errorMessage || "Failed to load menus. Please try again later."
+          }
           type="error"
           showIcon
           className="mb-4"
