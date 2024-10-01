@@ -8,6 +8,8 @@ import TreeView from "@/app/components/shared/TreeView";
 import { useRouter } from "next/navigation";
 import { makeMenuTreeDataNode } from "@/lib/util";
 import { useMemo } from "react";
+import { message } from "antd";
+import { useRef } from "react";
 
 const useMenuPage = () => {
   const dispatch = useAppDispatch();
@@ -50,11 +52,25 @@ export default function MenuPage() {
     handleAddMenu,
   } = useMenuPage();
   const [isClient, setIsClient] = useState(false);
+  const messageShown = useRef(false); // Keeps track of whether the message has been shown
+
+  const showMessage = () => {
+    if (!messageShown.current) {
+      message.info("Click on the menu items to update or delete them.", 3); // Auto-dismiss after 3 seconds
+      messageShown.current = true; // Mark the message as shown
+    }
+  };
 
   // Trigger the client-only rendering flag after mounting
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    showMessage();
+  }, [menuTrees]);
+
+  useEffect(() => {
+    if (isSuccess && (menuTrees?.length ?? 0) > 0 && !isLoading) {
+      setIsClient(true);
+    }
+  }, [isSuccess]);
 
   const menuTreeDataNode = useMemo(
     () => (isClient ? makeMenuTreeDataNode(menuTrees) : []),
@@ -74,13 +90,15 @@ export default function MenuPage() {
       </div>
 
       {isLoading && (
-        <Alert
-          message="Important Notice"
-          description="If this is your first time using the application, loading the menus may take over 2 minutes. This delay is due to the backend being hosted on free trial servers. Please click on the menu items to update or delete them."
-          type="info"
-          showIcon
-          className="mb-4"
-        />
+        <>
+          <Alert
+            message="Important Notice"
+            description="If this is your first time using the application, loading the menus may take over 2 minutes(refreshing helps). This delay is due to the backend being hosted on free trial servers."
+            showIcon
+            type="info"
+            className="mb-4"
+          />
+        </>
       )}
 
       {isLoading && (
